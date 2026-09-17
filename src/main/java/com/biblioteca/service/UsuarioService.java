@@ -18,15 +18,15 @@ public class UsuarioService {
     public Usuario crearUsuario(String nombre, String email) {
 
         if (nombre == null || nombre.isBlank()) {
-            throw new RuntimeException("El nombre es obligatorio");
+            throw new IllegalArgumentException("El nombre es obligatorio");
         }
 
         if (email == null || email.isBlank()) {
-            throw new RuntimeException("El email es obligatorio");
+            throw new IllegalArgumentException("El email es obligatorio");
         }
 
         if (!email.contains("@")) {
-            throw new RuntimeException("Email inválido");
+            throw new IllegalArgumentException("Email inválido");
         }
 
         Usuario usuario = new Usuario(nombre, email);

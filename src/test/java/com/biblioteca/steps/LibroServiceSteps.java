@@ -1,6 +1,5 @@
 package com.biblioteca.steps;
 
-import com.biblioteca.CucumberSpringConfiguration;
 import com.biblioteca.model.Libro;
 import com.biblioteca.service.LibroService;
 import io.cucumber.java.es.Dado;
@@ -12,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LibroServiceSteps extends CucumberSpringConfiguration {
+public class LibroServiceSteps {
 
     @Autowired
     private LibroService libroService;
@@ -45,13 +44,20 @@ public class LibroServiceSteps extends CucumberSpringConfiguration {
     @Cuando("intento crearLibro con título {string} y autor {string}")
     public void intentoCrearLibro(String titulo, String autor) {
         try {
-            // Convierte la cadena vacía del feature en null si aplica
-            String t = titulo.isEmpty() ? null : titulo;
-            String a = autor.isEmpty() ? null : autor;
-            libroService.crearLibro(t, a);
+            libroService.crearLibro(titulo, autor);
         } catch (Exception e) {
             excepcionCapturada = e;
         }
+    }
+
+    @Cuando("intento crearLibro con título nulo y autor {string}")
+    public void intentoCrearLibroConTituloNulo(String autor) {
+        capturarExcepcion(() -> libroService.crearLibro(null, autor));
+    }
+
+    @Cuando("intento crearLibro con título {string} y autor nulo")
+    public void intentoCrearLibroConAutorNulo(String titulo) {
+        capturarExcepcion(() -> libroService.crearLibro(titulo, null));
     }
 
     @Cuando("intento crearLibro2 con título {string} y autor {string}")
@@ -125,5 +131,18 @@ public class LibroServiceSteps extends CucumberSpringConfiguration {
     @Cuando("elimino el libro por su ID generado")
     public void eliminarPorIdGenerado() {
         libroService.eliminarLibro(idGenerado);
+    }
+
+    @Entonces("al buscar ese ID el resultado es nulo")
+    public void verificarLibroEliminado() {
+        assertNull(libroService.buscarLibro(idGenerado));
+    }
+
+    private void capturarExcepcion(Runnable accion) {
+        try {
+            accion.run();
+        } catch (Exception e) {
+            excepcionCapturada = e;
+        }
     }
 }

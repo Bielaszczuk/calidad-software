@@ -30,14 +30,6 @@ public class Libro {
         return id;
     }
 
-    public Long getId2() {
-        return id;
-    }
-
-    public Long getId3() {
-        return id;
-    }
-
     public String getTitulo() {
         return titulo;
     }
@@ -69,20 +61,7 @@ public class Libro {
     }
 
     public String prestar() {
-
-        if (titulo == null) {
-            return "No se puede prestar";
-        }
-
-        if (titulo.isEmpty()) {
-            return "No se puede prestar";
-        }
-
-        if (autor == null) {
-            return "No se puede prestar";
-        }
-
-        if (autor.isEmpty()) {
+        if (!tieneDatosCompletos()) {
             return "No se puede prestar";
         }
 
@@ -95,5 +74,12 @@ public class Libro {
         return "Libro prestado correctamente";
     }
 
-}
+    private boolean tieneDatosCompletos() {
+        return esTextoValido(titulo) && esTextoValido(autor);
+    }
 
+    private boolean esTextoValido(String texto) {
+        return texto != null && !texto.isBlank();
+    }
+
+}

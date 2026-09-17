@@ -1,6 +1,5 @@
 package com.biblioteca.steps;
 
-import com.biblioteca.CucumberSpringConfiguration;
 import com.biblioteca.model.Libro;
 import com.biblioteca.model.Prestamo;
 import com.biblioteca.model.Usuario;
@@ -8,133 +7,102 @@ import com.biblioteca.repository.LibroRepository;
 import com.biblioteca.repository.PrestamoRepository;
 import com.biblioteca.repository.UsuarioRepository;
 import com.biblioteca.service.PrestamoService;
+import io.cucumber.java.Before;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Entonces;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
-public class PrestamoServiceSteps extends CucumberSpringConfiguration {
+public class PrestamoServiceSteps {
 
-    @Autowired
-    private PrestamoService prestamoService;
-
-    @Autowired
+    @Mock
     private UsuarioRepository usuarioRepository;
 
-    @Autowired
+    @Mock
     private LibroRepository libroRepository;
 
-    @Autowired
+    @Mock
     private PrestamoRepository prestamoRepository;
+
+    @InjectMocks
+    private PrestamoService prestamoService;
 
     private Exception excepcionCapturada;
     private Prestamo prestamoCreado;
     private double resultadoCalculo;
     private List<Prestamo> listaPrestamos;
 
-    // --- PREPARACIÓN DE DATOS (DADO) ---
+    public PrestamoServiceSteps() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Before
+    public void prepararEscenario() {
+        reset(usuarioRepository, libroRepository, prestamoRepository);
+        when(prestamoRepository.save(any(Prestamo.class)))
+                .thenAnswer(invocacion -> invocacion.getArgument(0, Prestamo.class));
+        when(prestamoRepository.findAll()).thenReturn(List.of());
+        excepcionCapturada = null;
+        prestamoCreado = null;
+        listaPrestamos = null;
+    }
 
     @Dado("que existe un usuario activo de id {long}")
     public void crearUsuarioActivo(Long id) {
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-        usuario.setActivo(true);
-        usuario.setMoroso(false);
-        usuario.setPrestamos(new ArrayList<>());
-        usuarioRepository.save(usuario);
+        registrarUsuario(id, true, false, 0);
     }
 
     @Dado("que existe un usuario inactivo de id {long}")
     public void crearUsuarioInactivo(Long id) {
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-        usuario.setActivo(false);
-        usuario.setMoroso(false);
-        usuario.setPrestamos(new ArrayList<>());
-        usuarioRepository.save(usuario);
+        registrarUsuario(id, false, false, 0);
     }
 
     @Dado("que existe un usuario moroso de id {long}")
     public void crearUsuarioMoroso(Long id) {
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-        usuario.setActivo(true);
-        usuario.setMoroso(true);
-        usuario.setPrestamos(new ArrayList<>());
-        usuarioRepository.save(usuario);
+        registrarUsuario(id, true, true, 0);
     }
 
     @Dado("que existe un usuario activo con tres prestamos de id {long}")
     public void crearUsuarioConMaximoPrestamos(Long id) {
-        Usuario usuario = new Usuario();
-        usuario.setId(id);
-        usuario.setActivo(true);
-        usuario.setMoroso(false);
-        List<Prestamo> prestamos = new ArrayList<>();
-        prestamos.add(new Prestamo());
-        prestamos.add(new Prestamo());
-        prestamos.add(new Prestamo());
-        usuario.setPrestamos(prestamos);
-        usuarioRepository.save(usuario);
+        registrarUsuario(id, true, false, 3);
     }
 
     @Dado("que existe un libro disponible de id {long}")
     public void crearLibroDisponible(Long id) {
-        Libro libro = new Libro();
-        libro.setId(id);
-        libro.setPrestado(false);
-        libroRepository.save(libro);
+        registrarLibro(id, false);
     }
 
     @Dado("que existe un libro ya prestado de id {long}")
     public void crearLibroPrestado(Long id) {
-        Libro libro = new Libro();
-        libro.setId(id);
-        libro.setPrestado(true);
-        libroRepository.save(libro);
+        registrarLibro(id, true);
     }
 
     @Dado("que existe un préstamo activo de id {long}")
     public void crearPrestamoActivo(Long id) {
-        Libro libro = new Libro();
-        libro.setPrestado(true);
-        libroRepository.save(libro);
-
-        Prestamo prestamo = new Prestamo();
-        prestamo.setId(id);
-        prestamo.setDevuelto(false);
-        prestamo.setLibro(libro);
-        prestamoRepository.save(prestamo);
+        registrarPrestamo(id, false);
     }
 
     @Dado("que existe un préstamo devuelto de id {long}")
     public void crearPrestamoDevuelto(Long id) {
-        Libro libro = new Libro();
-        libro.setPrestado(false);
-        libroRepository.save(libro);
-
-        Prestamo prestamo = new Prestamo();
-        prestamo.setId(id);
-        prestamo.setDevuelto(true);
-        prestamo.setLibro(libro);
-        prestamoRepository.save(prestamo);
+        registrarPrestamo(id, true);
     }
-
-    // --- ACCIONES (CUANDO) ---
 
     @Cuando("intento prestar un libro con usuario id {long} y libro id {long}")
     public void intentoPrestarLibro(Long usuarioId, Long libroId) {
-        try {
-            prestamoService.prestarLibro(usuarioId, libroId);
-        } catch (Exception e) {
-            excepcionCapturada = e;
-        }
+        capturarExcepcion(() -> prestamoService.prestarLibro(usuarioId, libroId));
     }
 
     @Cuando("presto el libro con usuario id {long} y libro id {long}")
@@ -149,9 +117,7 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
 
     @Cuando("calculo el recargo A para un préstamo de hace {int} días")
     public void calcularRecargoAConDias(int dias) {
-        Prestamo p = new Prestamo();
-        p.setFechaPrestamo(LocalDate.now().minusDays(dias));
-        resultadoCalculo = prestamoService.calcularRecargoA(p);
+        resultadoCalculo = prestamoService.calcularRecargoA(prestamoDeHace(dias));
     }
 
     @Cuando("calculo el recargo B para un préstamo nulo")
@@ -161,18 +127,12 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
 
     @Cuando("calculo el recargo B para un préstamo de hace {int} días")
     public void calcularRecargoBConDias(int dias) {
-        Prestamo p = new Prestamo();
-        p.setFechaPrestamo(LocalDate.now().minusDays(dias));
-        resultadoCalculo = prestamoService.calcularRecargoB(p);
+        resultadoCalculo = prestamoService.calcularRecargoB(prestamoDeHace(dias));
     }
 
     @Cuando("intento devolver el préstamo con id {long}")
     public void intentoDevolverLibro(Long id) {
-        try {
-            prestamoService.devolverLibro(id);
-        } catch (Exception e) {
-            excepcionCapturada = e;
-        }
+        capturarExcepcion(() -> prestamoService.devolverLibro(id));
     }
 
     @Cuando("devuelvo el préstamo con id {long}")
@@ -182,11 +142,7 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
 
     @Cuando("intento devolver un préstamo antiguo con id {long}")
     public void intentoDevolverLibroAntiguo(Long id) {
-        try {
-            prestamoService.devolverLibroAntiguo(id);
-        } catch (Exception e) {
-            excepcionCapturada = e;
-        }
+        capturarExcepcion(() -> prestamoService.devolverLibroAntiguo(id));
     }
 
     @Cuando("devuelvo el préstamo antiguo con id {long}")
@@ -201,20 +157,17 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
 
     @Cuando("calculo la multa no devuelto de hace {int} días")
     public void calcularMultaNoDevuelto(int dias) {
-        Prestamo p = new Prestamo();
-        p.setDevuelto(false);
-        p.setFechaPrestamo(LocalDate.now().minusDays(dias));
-        resultadoCalculo = prestamoService.calcularMulta(p);
+        Prestamo prestamo = prestamoDeHace(dias);
+        prestamo.setDevuelto(false);
+        resultadoCalculo = prestamoService.calcularMulta(prestamo);
     }
 
     @Cuando("calculo la multa devuelto con diferencia de {int} días")
     public void calcularMultaDevuelto(int dias) {
-        Prestamo p = new Prestamo();
-        p.setDevuelto(true);
-        LocalDate inicio = LocalDate.now().minusDays(dias);
-        p.setFechaPrestamo(inicio);
-        p.setFechaDevolucion(LocalDate.now());
-        resultadoCalculo = prestamoService.calcularMulta(p);
+        Prestamo prestamo = prestamoDeHace(dias);
+        prestamo.setDevuelto(true);
+        prestamo.setFechaDevolucion(LocalDate.now(ZoneId.systemDefault()));
+        resultadoCalculo = prestamoService.calcularMulta(prestamo);
     }
 
     @Cuando("solicito la lista de todos los préstamos")
@@ -222,13 +175,10 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
         listaPrestamos = prestamoService.listarPrestamos();
     }
 
-    // --- VERIFICACIONES (ENTONCES) ---
-
     @Entonces("se lanza una excepción en prestamo con mensaje {string}")
     public void verificarExcepcion(String mensajeEsperado) {
         assertNotNull(excepcionCapturada, "Se esperaba una excepción pero no ocurrió.");
         assertEquals(mensajeEsperado, excepcionCapturada.getMessage());
-        excepcionCapturada = null;
     }
 
     @Entonces("el préstamo creado no es nulo y el libro queda prestado")
@@ -237,14 +187,14 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
         assertTrue(prestamoCreado.getLibro().isPrestado());
     }
 
-    @Entonces("el recargo A devuelto es {double}")
-    public void verificarRecargoA(double esperado) {
-        assertEquals(esperado, resultadoCalculo, 0.01);
+    @Entonces("^el recargo A devuelto es ([0-9]+(?:\\.[0-9]+)?)$")
+    public void verificarRecargoA(String esperado) {
+        assertEquals(Double.parseDouble(esperado), resultadoCalculo, 0.01);
     }
 
-    @Entonces("el recargo B devuelto es {double}")
-    public void verificarRecargoB(double esperado) {
-        assertEquals(esperado, resultadoCalculo, 0.01);
+    @Entonces("^el recargo B devuelto es ([0-9]+(?:\\.[0-9]+)?)$")
+    public void verificarRecargoB(String esperado) {
+        assertEquals(Double.parseDouble(esperado), resultadoCalculo, 0.01);
     }
 
     @Entonces("la devolución finaliza correctamente")
@@ -252,13 +202,57 @@ public class PrestamoServiceSteps extends CucumberSpringConfiguration {
         assertNull(excepcionCapturada);
     }
 
-    @Entonces("la multa devuelta es {double}")
-    public void verificarMulta(double esperado) {
-        assertEquals(esperado, resultadoCalculo, 0.01);
+    @Entonces("^la multa devuelta es ([0-9]+(?:\\.[0-9]+)?)$")
+    public void verificarMulta(String esperado) {
+        assertEquals(Double.parseDouble(esperado), resultadoCalculo, 0.01);
     }
 
     @Entonces("la lista de préstamos devuelta no es nula")
     public void verificarListaPrestamos() {
         assertNotNull(listaPrestamos);
+    }
+
+    private void registrarUsuario(Long id, boolean activo, boolean moroso, int cantidadPrestamos) {
+        Usuario usuario = new Usuario();
+        usuario.setId(id);
+        usuario.setActivo(activo);
+        usuario.setMoroso(moroso);
+        List<Prestamo> prestamos = new ArrayList<>();
+        for (int i = 0; i < cantidadPrestamos; i++) {
+            prestamos.add(new Prestamo());
+        }
+        usuario.setPrestamos(prestamos);
+        when(usuarioRepository.findById(id)).thenReturn(Optional.of(usuario));
+    }
+
+    private void registrarLibro(Long id, boolean prestado) {
+        Libro libro = new Libro();
+        libro.setId(id);
+        libro.setPrestado(prestado);
+        when(libroRepository.findById(id)).thenReturn(Optional.of(libro));
+    }
+
+    private void registrarPrestamo(Long id, boolean devuelto) {
+        Libro libro = new Libro();
+        libro.setPrestado(!devuelto);
+        Prestamo prestamo = new Prestamo();
+        prestamo.setId(id);
+        prestamo.setDevuelto(devuelto);
+        prestamo.setLibro(libro);
+        when(prestamoRepository.findById(id)).thenReturn(Optional.of(prestamo));
+    }
+
+    private Prestamo prestamoDeHace(int dias) {
+        Prestamo prestamo = new Prestamo();
+        prestamo.setFechaPrestamo(LocalDate.now(ZoneId.systemDefault()).minusDays(dias));
+        return prestamo;
+    }
+
+    private void capturarExcepcion(Runnable accion) {
+        try {
+            accion.run();
+        } catch (Exception e) {
+            excepcionCapturada = e;
+        }
     }
 }
