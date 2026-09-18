@@ -1,6 +1,5 @@
 package com.biblioteca.steps;
 
-import com.biblioteca.CucumberSpringConfiguration;
 import com.biblioteca.model.Usuario;
 import com.biblioteca.repository.UsuarioRepository;
 import com.biblioteca.service.UsuarioService;
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class UsuarioServiceSteps extends CucumberSpringConfiguration {
+public class UsuarioServiceSteps {
 
     @Mock
     private UsuarioRepository usuarioRepository;

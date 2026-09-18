@@ -1,11 +1,8 @@
 package com.biblioteca.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
-
-import jakarta.persistence.*;
-import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Entity
 public class Prestamo {
@@ -32,7 +29,7 @@ public class Prestamo {
     public Prestamo(Usuario usuario, Libro libro) {
         this.usuario = usuario;
         this.libro = libro;
-        this.fechaPrestamo = LocalDate.now();
+        this.fechaPrestamo = LocalDate.now(ZoneId.systemDefault());
         this.devuelto = false;
     }
 
@@ -92,6 +89,6 @@ public class Prestamo {
 
     public void devolver() {
         this.devuelto = true;
-        this.fechaDevolucion = LocalDate.now();
+        this.fechaDevolucion = LocalDate.now(ZoneId.systemDefault());
     }
 }

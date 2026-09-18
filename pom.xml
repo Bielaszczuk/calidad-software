@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>17</java.version>
+        <cucumber.version>7.23.0</cucumber.version>
 
         <sonar.organization>bielaszczuk</sonar.organization>
         <sonar.projectKey>Bielaszczuk_calidad-software</sonar.projectKey>
@@ -56,16 +57,10 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JUnit Platform Suite -->
+        <!-- Permite ejecutar el runner JUnit 4 de Cucumber en JUnit Platform -->
         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-suite-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-suite-engine</artifactId>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -73,21 +68,21 @@
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
-            <version>7.14.0</version>
+            <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit-platform-engine</artifactId>
-            <version>7.14.0</version>
+            <artifactId>cucumber-junit</artifactId>
+            <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-spring</artifactId>
-            <version>7.14.0</version>
+            <version>${cucumber.version}</version>
             <scope>test</scope>
         </dependency>
 

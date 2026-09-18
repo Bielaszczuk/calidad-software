@@ -18,11 +18,11 @@ public class LibroService {
     public Libro crearLibro(String titulo, String autor) {
 
         if (titulo == null || titulo.isBlank()) {
-            throw new RuntimeException("El título es obligatorio");
+            throw new IllegalArgumentException("El título es obligatorio");
         }
 
         if (autor == null || autor.isBlank()) {
-            throw new RuntimeException("El autor es obligatorio");
+            throw new IllegalArgumentException("El autor es obligatorio");
         }
 
         Libro libro = new Libro(titulo, autor);
@@ -31,18 +31,7 @@ public class LibroService {
     }
 
     public Libro crearLibro2(String titulo, String autor) {
-
-        if (titulo == null || titulo.isBlank()) {
-            throw new RuntimeException("El título es obligatorio");
-        }
-
-        if (autor == null || autor.isBlank()) {
-            throw new RuntimeException("El autor es obligatorio");
-        }
-
-        Libro libro = new Libro(titulo, autor);
-
-        return libroRepository.save(libro);
+        return crearLibro(titulo, autor);
     }
 
     public List<Libro> listarLibros() {
@@ -57,4 +46,3 @@ public class LibroService {
         libroRepository.deleteById(id);
     }
 }
-

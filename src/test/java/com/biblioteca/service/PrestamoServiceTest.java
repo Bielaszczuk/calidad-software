@@ -1,20 +1,22 @@
 package com.biblioteca.service;
 
-import com.biblioteca.model.Prestamo;
+import com.biblioteca.repository.LibroRepository;
+import com.biblioteca.repository.PrestamoRepository;
+import com.biblioteca.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 class PrestamoServiceTest {
 
     @Test
-    void calcularMultaConPrestamoNullDebeDarCero() {
+    void calcularMultaConPrestamoNuloDevuelveCero() {
+        PrestamoService service = new PrestamoService(
+                mock(UsuarioRepository.class),
+                mock(LibroRepository.class),
+                mock(PrestamoRepository.class));
 
-        PrestamoService service = null;
-
-        // Test deliberadamente simple para la versión inicial.
-        // Los alumnos deberán detectar que la cobertura es insuficiente.
-
-        assertNull(service);
+        assertEquals(0.0, service.calcularMulta(null));
     }
 }

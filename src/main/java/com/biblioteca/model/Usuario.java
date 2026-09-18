@@ -1,11 +1,6 @@
 package com.biblioteca.model;
 
 import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +19,7 @@ public class Usuario {
 
     private boolean moroso;
 
-    @OneToMany
+    @OneToMany(mappedBy = "usuario")
     private List<Prestamo> prestamos = new ArrayList<>();
 
     public Usuario() {
